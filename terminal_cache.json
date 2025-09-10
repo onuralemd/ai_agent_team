@@ -1,0 +1,352 @@
+{
+  "dd4ca66b-bc52-441b-a9d5-2fe67db0ada6": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ]
+  },
+  "499d3bf8-cfab-4885-ab51-de2bba023744": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ]
+  },
+  "5c8e1e8e-9619-4412-8cd6-165af3f18627": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ]
+  },
+  "6e25c86a-0f6d-461b-93d1-19529fc055bf": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ]
+  },
+  "02addd14-32fe-4017-b22d-c7eb4eb0b94b": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ]
+  },
+  "3d961538-9bda-4d37-8626-7f315790a88c": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ]
+  },
+  "34f28a00-9584-42ff-817c-02b8a59aaea3": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ]
+  },
+  "e4b7a6b6-d64a-4032-9834-72c03427e92b": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import os\nimport requests\nimport datetime\nimport sys\n\n# Configuration\nAPI_KEY = os.getenv('OPENWEATHER_API_KEY')\nCITY_NAME = os.getenv('CITY_NAME', 'London')\nLOG_FILE = os.getenv('WEATHER_LOG_FILE', 'weather_log.txt')\n\nif not API_KEY:\n    print(\"Error: Please set the OPENWEATHER_API_KEY environment variable.\")\n    sys.exit(1)\n\ndef get_city_coordinates(city_name, api_key):\n    \"\"\"Get latitude and longitude for the city.\"\"\"\n    url = f'http://api.openweathermap.org/geo/1.0/direct?q={city_name}&limit=1&appid={api_key}'\n    resp = requests.get(url)\n    resp.raise_for_status()\n    data = resp.json()\n    if not data:\n        raise ValueError(f\"City '{city_name}' not found.\")\n    lat = data[0]['lat']\n    lon = data[0]['lon']\n    return lat, lon\n\ndef get_weather_data(lat, lon, api_key):\n    \"\"\"Get current weather & hourly forecast using One Call API.\"\"\"\n    url = (\n        f'https://api.openweathermap.org/data/2.5/onecall'\n        f'?lat={lat}&lon={lon}&exclude=minutely,daily,alerts&appid={api_key}&units=metric'\n    )\n    resp = requests.get(url)\n    resp.raise_for_status()\n    return resp.json()\n\ndef check_rain_in_next_hour(weather_data):\n    \"\"\"Check if it will rain in the next hour.\"\"\"\n    if 'hourly' in weather_data and len(weather_data['hourly']) >= 2:\n        next_hour = weather_data['hourly'][1]  # First element is the current hour\n        weather = next_hour.get('weather', [])\n        for w in weather:\n            if 'rain' in w.get('main', '').lower() or 'rain' in w.get('description', '').lower():\n                return True\n        # There may also be a 'rain' key\n        if 'rain' in next_hour and next_hour['rain'].get('1h', 0) > 0:\n            return True\n    return False\n\ndef log_weather(log_file, weather_data):\n    now = datetime.datetime.now().isoformat(timespec='seconds')\n    current_weather = weather_data.get('current', {})\n    temp = current_weather.get('temp', 'N/A')\n    humidity = current_weather.get('humidity', 'N/A')\n    weather_desc = current_weather.get('weather', [{}])[0].get('description', 'N/A')\n    log_line = (\n        f\"{now} | {CITY_NAME} | Temp: {temp}C | \"\n        f\"Humidity: {humidity}% | Condition: {weather_desc}\\n\"\n    )\n    with open(log_file, 'a') as f:\n        f.write(log_line)\n\ndef main():\n    try:\n        lat, lon = get_city_coordinates(CITY_NAME, API_KEY)\n        weather_data = get_weather_data(lat, lon, API_KEY)\n        log_weather(LOG_FILE, weather_data)\n\n        if check_rain_in_next_hour(weather_data):\n            print(\"ALERT: Rain is forecasted in the next hour in\", CITY_NAME)\n    except Exception as e:\n        print(\"Error:\", e)\n\nif __name__ == '__main__':\n    main()"
+  },
+  "60ab74fa-e9ca-4937-a75c-57466b1d3d10": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ],
+    "code": "import requests\nimport time\nimport sys\nfrom datetime import datetime\n\ndef get_lat_lon(city, api_key):\n    url = 'https://api.openweathermap.org/geo/1.0/direct'\n    params = {\n        'q': city,\n        'appid': api_key,\n        'limit': 1\n    }\n    try:\n        resp = requests.get(url, params=params, timeout=10)\n        resp.raise_for_status()\n        data = resp.json()\n        if not data:\n            print(f\"Error: Could not find city '{city}'. Check the city name.\")\n            sys.exit(1)\n        return data[0]['lat'], data[0]['lon']\n    except Exception as e:\n        print(f\"Error fetching coordinates: {e}\")\n        sys.exit(1)\n\ndef get_current_weather(lat, lon, api_key):\n    url = 'https://api.openweathermap.org/data/2.5/weather'\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'appid': api_key,\n        'units': 'metric'\n    }\n    try:\n        resp = requests.get(url, params=params, timeout=10)\n        resp.raise_for_status()\n        data = resp.json()\n        weather_desc = data['weather'][0]['description']\n        temp = data['main']['temp']\n        rain = data.get('rain', {}).get('1h', 0.0)\n        return {\n            'temp': temp,\n            'desc': weather_desc,\n            'rain': rain  # Rain volume for last 1 hour in mm\n        }\n    except Exception as e:\n        print(f\"Error fetching current weather: {e}\")\n        return None\n\ndef get_next_hour_forecast(lat, lon, api_key):\n    url = 'https://api.openweathermap.org/data/2.5/onecall'\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'appid': api_key,\n        'exclude': 'minutely,daily,alerts,current',\n        'units': 'metric'\n    }\n    try:\n        resp = requests.get(url, params=params, timeout=10)\n        resp.raise_for_status()\n        data = resp.json()\n        next_hour = data['hourly'][1]  # The next full hour (not current)\n        temp = next_hour['temp']\n        desc = next_hour['weather'][0]['description']\n        pop = next_hour['pop'] if 'pop' in next_hour else 0.0  # Probability of precipitation\n        rain = next_hour.get('rain', {}).get('1h', 0.0)\n        return {\n            'temp': temp,\n            'desc': desc,\n            'pop': pop,\n            'rain': rain\n        }\n    except Exception as e:\n        print(f\"Error fetching next hour forecast: {e}\")\n        return None\n\ndef log_weather(logfile, timestamp, city, current, forecast):\n    with open(logfile, 'a', encoding='utf-8') as f:\n        f.write(f\"{timestamp} - {city}\\n\")\n        f.write(f\"  Current: {current['temp']}\u00b0C, {current['desc']}, rain last hour: {current['rain']} mm\\n\")\n        f.write(f\"  Next Hour Forecast: {forecast['temp']}\u00b0C, {forecast['desc']}, rain proba: {forecast['pop']*100:.0f}%, rain next hour: {forecast['rain']} mm\\n\")\n        f.write(\"\\n\")\n\ndef main():\n    import argparse\n\n    parser = argparse.ArgumentParser(description=\"Weather Logger with Rain Alert\")\n    parser.add_argument('city', type=str, help='City name (e.g., London)')\n    parser.add_argument('apikey', type=str, help='OpenWeatherMap API key')\n    args = parser.parse_args()\n\n    city = args.city\n    api_key = args.apikey\n    logfile = 'weather_log.txt'\n\n    lat, lon = get_lat_lon(city, api_key)\n    print(f\"Monitoring weather for {city} (lat={lat}, lon={lon}) every 15 minutes. Logging to '{logfile}'.\\nPress Ctrl+C to stop.\")\n\n    try:\n        while True:\n            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')\n            current = get_current_weather(lat, lon, api_key)\n            forecast = get_next_hour_forecast(lat, lon, api_key)\n            if current and forecast:\n                log_weather(logfile, now, city, current, forecast)\n                # Print alert if rain is expected in next hour\n                if forecast['pop'] > 0.2 or forecast['rain'] > 0:\n                    print(f\"ALERT {now}: Rain expected within the next hour in {city}!\")\n            else:\n                print(f\"{now}: Failed to fetch weather data. See errors above.\")\n            time.sleep(900)  # 15 minutes (900 seconds)\n    except KeyboardInterrupt:\n        print(\"\\nStopped weather monitoring.\")\n\nif __name__ == '__main__':\n    main()"
+  },
+  "a1f5401b-7789-49f5-99d0-b44344eb3cbe": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ],
+    "code": "import os\nimport requests\nimport time\nimport logging\nfrom datetime import datetime, timedelta\n\n# Constants\nAPI_KEY_ENV = 'OPENWEATHER_API_KEY'\nBASE_URL = 'https://api.openweathermap.org/data/2.5'\nLOG_FILE = 'weather_log.txt'\n\n# Configure logger\nlogging.basicConfig(\n    filename=LOG_FILE,\n    level=logging.INFO,\n    format='%(asctime)s %(levelname)s: %(message)s',\n    datefmt='%Y-%m-%d %H:%M:%S'\n)\n\ndef get_api_key():\n    api_key = os.environ.get(API_KEY_ENV)\n    if not api_key:\n        raise RuntimeError(f\"Please set the {API_KEY_ENV} environment variable.\")\n    return api_key\n\ndef get_city_coordinates(city, api_key):\n    url = f'{BASE_URL}/weather'\n    params = {\n        'q': city,\n        'appid': api_key\n    }\n    resp = requests.get(url, params=params, timeout=10)\n    resp.raise_for_status()\n    data = resp.json()\n    lat = data['coord']['lat']\n    lon = data['coord']['lon']\n    return lat, lon\n\ndef fetch_weather_data(city, api_key):\n    lat, lon = get_city_coordinates(city, api_key)\n    url = f'{BASE_URL}/onecall'\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'appid': api_key,\n        'units': 'metric',     # or 'imperial'\n        'exclude': 'minutely,daily,alerts'\n    }\n    resp = requests.get(url, params=params, timeout=10)\n    resp.raise_for_status()\n    data = resp.json()\n    current = data['current']\n    # Find forecast for next hour\n    if len(data['hourly']) > 1:\n        next_hour_forecast = data['hourly'][1]\n    else:\n        # If hourly data not available, use current again (rare)\n        next_hour_forecast = current\n    return current, next_hour_forecast\n\ndef check_for_rain(forecast):\n    # OpenWeather One Call API: 'weather' can contain 'Rain' in its main/description\n    # and precipitation volume is in 'rain' or 'snow' keys as well\n    weather_list = forecast.get('weather', [])\n    for w in weather_list:\n        if 'rain' in w.get('main', '').lower() or 'rain' in w.get('description', '').lower():\n            return True\n    # Check rain volume fields (optional)\n    if 'rain' in forecast and forecast['rain'].get('1h', 0) > 0:\n        return True\n    return False\n\ndef log_weather_data(city, current, forecast):\n    current_time = datetime.utcfromtimestamp(current['dt']).strftime('%Y-%m-%d %H:%M:%S')\n    forecast_time = datetime.utcfromtimestamp(forecast['dt']).strftime('%Y-%m-%d %H:%M:%S')\n    log_msg = (\n        f\"City: {city}\\n\"\n        f\"Current ({current_time} UTC): \"\n        f\"Temp: {current['temp']}\u00b0C, Weather: {current['weather'][0]['description']}\\n\"\n        f\"Next hour ({forecast_time} UTC): \"\n        f\"Temp: {forecast['temp']}\u00b0C, Weather: {forecast['weather'][0]['description']}\\n\"\n        f\"{'-'*32}\"\n    )\n    logging.info(log_msg)\n\ndef print_rain_alert(city, forecast):\n    print(f\"ALERT: Rain expected in the next hour in {city}! ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})\")\n\ndef scheduled_runner(city, api_key, interval_minutes=15):\n    print(f\"Starting periodic weather check for {city} every {interval_minutes} minutes...\")\n    while True:\n        try:\n            current, next_hour = fetch_weather_data(city, api_key)\n            log_weather_data(city, current, next_hour)\n            if check_for_rain(next_hour):\n                print_rain_alert(city, next_hour)\n        except Exception as e:\n            logging.error(f\"Error fetching/logging weather data: {e}\")\n            print(f\"Error: {e}\")\n        time.sleep(interval_minutes * 60)\n\ndef main():\n    import sys\n    try:\n        api_key = get_api_key()\n    except Exception as e:\n        print(f\"Error: {e}\")\n        sys.exit(1)\n\n    city = input(\"Enter city name: \").strip()\n    # Test first call before scheduling\n    try:\n        current, next_hour = fetch_weather_data(city, api_key)\n    except Exception as e:\n        print(f\"Could not retrieve weather data: {e}\")\n        sys.exit(1)\n\n    log_weather_data(city, current, next_hour)\n    if check_for_rain(next_hour):\n        print_rain_alert(city, next_hour)\n\n    # Start scheduled runner\n    scheduled_runner(city, api_key, interval_minutes=15)\n\nif __name__ == \"__main__\":\n    main()"
+  },
+  "eb009f06-08be-436d-abe8-6439e59240a8": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ],
+    "code": "import requests\nimport time\nimport sys\nimport argparse\nfrom datetime import datetime\nimport logging\nimport os\n\n# ====================================\n# Configuration\n# ====================================\n\nAPI_KEY = \"YOUR_OPENWEATHERMAP_API_KEY\"  # <-- Replace with your API key or set via environment variable\nBASE_URL = \"https://api.openweathermap.org/data/2.5\"\nLOG_FILE = \"weather_log.txt\"\nFETCH_INTERVAL = 15 * 60  # 15 minutes in seconds\n\ndef get_api_key():\n    \"\"\"\n    Get the API key either from the hardcoded value or environment variable.\n    \"\"\"\n    key = os.getenv(\"OPENWEATHERMAP_API_KEY\", API_KEY)\n    if key == \"YOUR_OPENWEATHERMAP_API_KEY\" or not key:\n        raise ValueError(\"Please set your OpenWeatherMap API key in the script or as the OPENWEATHERMAP_API_KEY environment variable.\")\n    return key\n\n# ====================================\n# Weather Fetching Functions\n# ====================================\n\ndef get_city_coordinates(city, api_key):\n    \"\"\"\n    Gets the latitude and longitude for a city name using OpenWeatherMap Geocoding API.\n    \"\"\"\n    url = f\"{BASE_URL}/geo/1.0/direct\"\n    params = {\n        'q': city,\n        'limit': 1,\n        'appid': api_key\n    }\n    try:\n        response = requests.get(url, params=params, timeout=10)\n        response.raise_for_status()\n        data = response.json()\n        if not data:\n            raise ValueError(f\"City '{city}' not found.\")\n        lat = data[0]['lat']\n        lon = data[0]['lon']\n        return lat, lon\n    except Exception as e:\n        logging.error(f\"Failed to get city coordinates: {e}\")\n        return None, None\n\ndef get_weather_and_hourly(lat, lon, api_key):\n    \"\"\"\n    Fetches current weather and the next hour forecast using One Call API 3.0.\n    \"\"\"\n    # Note: For API v2.5, the endpoint is /onecall\n    url = f\"{BASE_URL}/onecall\"\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'exclude': 'minutely,daily,alerts',\n        'units': 'metric',\n        'appid': api_key\n    }\n    try:\n        response = requests.get(url, params=params, timeout=10)\n        response.raise_for_status()\n        data = response.json()\n        current = data['current']\n        hourly = data['hourly']\n        return current, hourly\n    except Exception as e:\n        logging.error(f\"Failed to get weather data: {e}\")\n        return None, None\n\n# ====================================\n# Logging Setup\n# ====================================\n\ndef setup_logging():\n    \"\"\"\n    Configures logging to both file and console.\n    \"\"\"\n    logging.basicConfig(\n        level=logging.INFO,\n        format='%(asctime)s %(levelname)s: %(message)s',\n        handlers=[\n            logging.FileHandler(LOG_FILE, encoding=\"utf-8\"),\n            logging.StreamHandler(sys.stdout)\n        ]\n    )\n\ndef log_weather(current, next_hour):\n    \"\"\"\n    Logs the current weather and next hour forecast to the log file.\n    \"\"\"\n    now_str = datetime.utcfromtimestamp(current[\"dt\"]).strftime(\"%Y-%m-%d %H:%M:%S (UTC)\")\n    next_hour_time = datetime.utcfromtimestamp(next_hour[\"dt\"]).strftime(\"%Y-%m-%d %H:%M:%S (UTC)\")\n    log_lines = [\n        f\"== {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S (UTC)')} ==\",\n        f\"Current [{now_str}]:\",\n        f\"  Temp: {current.get('temp', 'N/A')} \u00b0C\",\n        f\"  Weather: {current['weather'][0]['description'] if current.get('weather') else 'N/A'}\",\n        \"\",\n        f\"Next Hour Forecast [{next_hour_time}]:\",\n        f\"  Temp: {next_hour.get('temp', 'N/A')} \u00b0C\",\n        f\"  Weather: {next_hour['weather'][0]['description'] if next_hour.get('weather') else 'N/A'}\",\n        \"-\" * 50,\n    ]\n    logging.info(\"\\n\".join(log_lines))\n\ndef rain_expected(next_hour):\n    \"\"\"\n    Checks if rain is expected in the next hour forecast.\n    \"\"\"\n    weather_list = next_hour.get('weather', [])\n    for w in weather_list:\n        main = w.get(\"main\", \"\").lower()\n        description = w.get(\"description\", \"\").lower()\n        if \"rain\" in main or \"rain\" in description or next_hour.get('rain'):\n            return True\n    # Also check if 'rain' field exists (amount of rain in mm)\n    if 'rain' in next_hour and next_hour['rain'].get('1h', 0) > 0:\n        return True\n    return False\n\n# ====================================\n# Main Loop\n# ====================================\n\ndef main():\n    parser = argparse.ArgumentParser(description=\"Weather Logger using OpenWeatherMap API\")\n    parser.add_argument(\"--city\", type=str, default=\"London\", help=\"City Name (default: London)\")\n    args = parser.parse_args()\n    city = args.city\n\n    setup_logging()\n    api_key = get_api_key()\n\n    # Get coordinates for the city\n    lat, lon = get_city_coordinates(city, api_key)\n    if lat is None or lon is None:\n        print(f\"Could not get coordinates for city '{city}'. Exiting.\")\n        sys.exit(1)\n\n    print(f\"Starting weather logger for city: {city} ({lat}, {lon})\")\n    print(f\"Logging to {LOG_FILE}. Fetching data every {FETCH_INTERVAL // 60} minutes.\")\n\n    try:\n        while True:\n            current, hourly = get_weather_and_hourly(lat, lon, api_key)\n            if current and hourly and len(hourly) > 1:\n                next_hour = hourly[1]  # index 0: current hour, index 1: next hour\n                log_weather(current, next_hour)\n                if rain_expected(next_hour):\n                    print(\"ALERT: Rain is expected within the next hour!\")\n            else:\n                logging.error(\"Incomplete weather data received. Skipping this cycle.\")\n            time.sleep(FETCH_INTERVAL)\n    except KeyboardInterrupt:\n        print(\"\\nExiting weather logger.\")\n    except Exception as e:\n        logging.error(f\"Fatal error: {e}\")\n\n# ====================================\n# Entry Point\n# ====================================\n\nif __name__ == '__main__':\n    main()"
+  },
+  "703aefd1-68bb-4a0e-96a0-6df9c643307c": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import requests\nimport time\nimport datetime\nimport logging\nimport sys\nfrom typing import Dict, Any\n\n# Set your OpenWeatherMap API key here\nAPI_KEY = 'YOUR_API_KEY'  # <-- Replace with your actual API key\n\n# Configure logging\nlogging.basicConfig(\n    filename='weather.log',\n    level=logging.INFO,\n    format='%(asctime)s - %(levelname)s - %(message)s'\n)\n\ndef get_city_coordinates(city: str) -> Dict[str, float]:\n    url = \"http://api.openweathermap.org/geo/1.0/direct\"\n    params = {\n        'q': city,\n        'limit': 1,\n        'appid': API_KEY\n    }\n    try:\n        response = requests.get(url, params=params, timeout=10)\n        response.raise_for_status()\n        data = response.json()\n        if data:\n            return {'lat': data[0]['lat'], 'lon': data[0]['lon']}\n        else:\n            raise ValueError(\"City not found\")\n    except Exception as e:\n        logging.error(f\"Error getting coordinates for {city}: {e}\")\n        raise\n\ndef fetch_weather(lat: float, lon: float) -> Any:\n    url = \"https://api.openweathermap.org/data/2.5/onecall\"\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'exclude': 'minutely,daily,alerts',\n        'appid': API_KEY,\n        'units': 'metric'\n    }\n    try:\n        response = requests.get(url, params=params, timeout=10)\n        response.raise_for_status()\n        return response.json()\n    except Exception as e:\n        logging.error(f\"Error fetching weather data: {e}\")\n        raise\n\ndef check_rain_in_next_hour(hourly_forecast: Any) -> bool:\n    # The first item in hourly is the next hour\n    if not hourly_forecast:\n        return False\n    next_hour = hourly_forecast[0]  # Next hour's forecast\n    weather = next_hour.get('weather', [])\n    rain = next_hour.get('rain', None)\n\n    rain_detected = False\n\n    # OpenWeatherMap may have a \"rain\" key or it may just be in the weather description\n    if rain and rain.get('1h', 0) > 0:\n        rain_detected = True\n    else:\n        for cond in weather:\n            desc = cond.get('description', '').lower()\n            if 'rain' in desc:\n                rain_detected = True\n                break\n    return rain_detected\n\ndef log_weather(city: str, current: Any, next_hour: Any) -> None:\n    now = datetime.datetime.utcfromtimestamp(current['dt']).strftime('%Y-%m-%d %H:%M:%S')\n    conditions = ', '.join([w['description'] for w in current.get('weather', [])])\n    temp = current.get('temp', 'N/A')\n    curr_text = f\"Timestamp: {now}, City: {city}, Temp: {temp}\u00b0C, Current: {conditions}\"\n\n    nh_time = datetime.datetime.utcfromtimestamp(next_hour['dt']).strftime('%Y-%m-%d %H:%M:%S')\n    nh_conditions = ', '.join([w['description'] for w in next_hour.get('weather', [])])\n    nh_temp = next_hour.get('temp', 'N/A')\n    nh_rain = next_hour.get('rain', {}).get('1h', 0) if 'rain' in next_hour else 0\n    forecast_text = (f\"Next Hour Forecast [{nh_time}]: Temp: {nh_temp}\u00b0C, \"\n                     f\"Condition: {nh_conditions}, Expected Rain: {nh_rain} mm\")\n\n    logmsg = f\"{curr_text} | {forecast_text}\"\n    logging.info(logmsg)\n\ndef main():\n    city = input(\"Enter city name: \").strip()\n    try:\n        coords = get_city_coordinates(city)\n    except Exception:\n        print(f\"Could not find city: '{city}'. Exiting.\")\n        sys.exit(1)\n\n    print(f\"Monitoring weather for '{city}' every 15 minutes... (Press Ctrl+C to stop)\")\n\n    while True:\n        try:\n            data = fetch_weather(coords['lat'], coords['lon'])\n            current = data.get('current', {})\n            hourly = data.get('hourly', [])\n            if not current or not hourly:\n                logging.error(\"Incomplete data from API\")\n                print(\"Incomplete data received, see log for details.\")\n            else:\n                rain_expected = check_rain_in_next_hour(hourly)\n                if rain_expected:\n                    alert = f\"ALERT: Rain expected in the next hour in {city}!\"\n                    print(alert)\n                    logging.warning(alert)\n                log_weather(city, current, hourly[0])\n        except Exception as e:\n            print(f\"Error in fetching or processing weather: {e}. See log for details.\")\n            logging.error(f\"Main loop error: {e}\")\n        time.sleep(900)  # 15 minutes\n\nif __name__ == \"__main__\":\n    main()"
+  },
+  "79cf654b-00e9-44e4-af0c-e6c1bae16dac": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import requests\nimport json\nimport time\nimport datetime\nimport sys\nimport os\n\n# ---------------- User Configuration ----------------\nAPI_KEY = os.environ.get(\"OWM_API_KEY\", \"YOUR_OPENWEATHERMAP_API_KEY\")  # Set via env or paste here\nCITY_NAME = os.environ.get(\"OWM_CITY_NAME\", \"London\")                  # Set via env or paste here\nLOG_FILE = \"weather_log.txt\"\nPOLL_INTERVAL = 900  # 15 minutes in seconds\n# ----------------------------------------------------\n\nOWM_CURRENT_URL = \"https://api.openweathermap.org/data/2.5/weather\"\nOWM_FORECAST_URL = \"https://api.openweathermap.org/data/2.5/forecast\"\n\ndef fetch_weather(api_key, city):\n    try:\n        params = {\"q\": city, \"appid\": api_key, \"units\": \"metric\"}\n        resp = requests.get(OWM_CURRENT_URL, params=params, timeout=10)\n        resp.raise_for_status()\n        return resp.json()\n    except Exception as e:\n        print(f\"[{datetime.datetime.now()}] Error fetching current weather: {e}\")\n        return None\n\ndef fetch_forecast(api_key, city):\n    try:\n        params = {\"q\": city, \"appid\": api_key, \"units\": \"metric\", \"cnt\": 2}\n        resp = requests.get(OWM_FORECAST_URL, params=params, timeout=10)\n        resp.raise_for_status()\n        return resp.json()\n    except Exception as e:\n        print(f\"[{datetime.datetime.now()}] Error fetching forecast: {e}\")\n        return None\n\ndef check_rain_in_forecast(forecast_data):\n    \"\"\"Check if rain is expected in the next hour forecast.\"\"\"\n    if not forecast_data or \"list\" not in forecast_data or len(forecast_data[\"list\"]) < 1:\n        return False\n    # Take the first forecast entry (next period, usually 3h step)\n    forecast_ent = forecast_data[\"list\"][0]\n    rain_prob = False\n    \n    # Check 'rain' and weather description\n    if \"rain\" in forecast_ent and forecast_ent[\"rain\"]:\n        rain_prob = True\n    else:\n        for item in forecast_ent.get(\"weather\", []):\n            descr = item.get(\"main\", \"\").lower()\n            if \"rain\" in descr or item.get(\"description\", \"\").lower().find(\"rain\") != -1:\n                rain_prob = True\n    return rain_prob\n\ndef log_weather(logfile, current, forecast):\n    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')\n    with open(logfile, \"a\") as f:\n        f.write(f\"----- {timestamp} -----\\n\")\n        f.write(f\"Current weather:\\n{json.dumps(current, indent=2)}\\n\")\n        f.write(f\"1-hour forecast:\\n{json.dumps(forecast, indent=2)}\\n\\n\")\n\ndef main():\n    if API_KEY == \"YOUR_OPENWEATHERMAP_API_KEY\":\n        print(\"Please set your OpenWeatherMap API key (API_KEY).\")\n        sys.exit(1)\n    if not CITY_NAME:\n        print(\"Please set the city name (CITY_NAME).\")\n        sys.exit(1)\n\n    while True:\n        current_data = fetch_weather(API_KEY, CITY_NAME)\n        forecast_data = fetch_forecast(API_KEY, CITY_NAME)\n\n        if current_data and forecast_data:\n            log_weather(LOG_FILE, current_data, forecast_data)\n            if check_rain_in_forecast(forecast_data):\n                print(f\"ALERT: Rain is expected in {CITY_NAME} within the next forecasted window!\")\n        else:\n            print(f\"[{datetime.datetime.now()}] Warning: Could not fetch all weather data.\")\n\n        time.sleep(POLL_INTERVAL)\n\nif __name__ == \"__main__\":\n    main()"
+  },
+  "d23b9108-50ff-4439-ac83-1774f9cb9870": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import requests\nimport time\nfrom datetime import datetime\n\n# ====== PARAMETERS ======\nAPI_KEY = 'YOUR_OPENWEATHERMAP_API_KEY'   # <-- Replace this with your OpenWeatherMap API key\nCITY_NAME = 'London'                      # <-- Set your target city name\nLOG_FILE = 'weather_log.txt'\n# ========================\n\ndef get_city_coordinates(city_name, api_key):\n    \"\"\"Fetch coordinates (lat, lon) for given city name using OpenWeatherMap Geocoding API.\"\"\"\n    geocode_url = 'http://api.openweathermap.org/geo/1.0/direct'\n    params = {'q': city_name, 'appid': api_key, 'limit': 1}\n    response = requests.get(geocode_url, params=params)\n    response.raise_for_status()\n    data = response.json()\n    if not data:\n        raise ValueError(f\"City '{city_name}' not found.\")\n    lat = data[0]['lat']\n    lon = data[0]['lon']\n    return lat, lon\n\ndef get_weather_and_forecast(lat, lon, api_key):\n    \"\"\"Fetch current weather and 1-hour forecast from One Call API.\"\"\"\n    onecall_url = 'https://api.openweathermap.org/data/2.5/onecall'\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'appid': api_key,\n        'units': 'metric',\n        'exclude': 'minutely,daily,alerts'\n    }\n    response = requests.get(onecall_url, params=params)\n    response.raise_for_status()\n    data = response.json()\n    return data\n\ndef log_weather(log_path, timestamp, current, forecast):\n    with open(log_path, 'a') as f:\n        f.write(f\"{timestamp} - CURRENT:\\n\")\n        f.write(f\"  Temp: {current.get('temp')}\u00b0C, Weather: {current['weather'][0]['description']}\\n\")\n        f.write(f\"{timestamp} - FORECAST (1h):\\n\")\n        f.write(f\"  Temp: {forecast.get('temp')}\u00b0C, Weather: {forecast['weather'][0]['description']}\\n\\n\")\n\ndef main():\n    # Get coordinates for city\n    try:\n        lat, lon = get_city_coordinates(CITY_NAME, API_KEY)\n    except Exception as e:\n        print(f\"Error getting coordinates for city: {e}\")\n        return\n\n    print(f\"Monitoring weather for {CITY_NAME} at ({lat}, {lon})...\")\n\n    while True:\n        try:\n            data = get_weather_and_forecast(lat, lon, API_KEY)\n            now = datetime.now()\n            timestamp = now.strftime('%Y-%m-%d %H:%M:%S')\n\n            current_weather = data['current']\n            # Look for the forecast 1 hour ahead\n            hourly_forecasts = data.get('hourly', [])\n            if len(hourly_forecasts) < 2:\n                print(\"Not enough forecast data.\")\n                continue\n            forecast_1h = hourly_forecasts[1]\n\n            log_weather(LOG_FILE, timestamp, current_weather, forecast_1h)\n\n            # Check for rain in the 1-hour forecast\n            rain_expected = False\n\n            # OpenWeatherMap denotes rain as possible in 'weather' description and can also include a 'rain' key\n            weather_desc = forecast_1h['weather'][0]['main'].lower()\n            if 'rain' in weather_desc or forecast_1h.get('rain', 0):\n                rain_expected = True\n\n            if rain_expected:\n                print(f\"Alert: Rain expected in the next hour in {CITY_NAME}! [{timestamp}]\")\n            else:\n                print(f\"Checked at {timestamp} - No rain expected in the next hour.\")\n\n        except Exception as ex:\n            print(f\"Error during weather check: {ex}\")\n\n        # Sleep for 15 minutes\n        time.sleep(15 * 60)\n\nif __name__ == '__main__':\n    main()"
+  },
+  "e670cedc-9a20-4e2c-ab2a-bb8529f6d7fd": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import requests\nimport time\nimport json\nfrom datetime import datetime\nimport argparse\nimport os\n\ndef fetch_weather(api_key, city):\n    \"\"\"Fetches current weather and 1-hour forecast for the given city using OpenWeatherMap.\"\"\"\n    # Get city coordinates\n    geocode_url = f\"http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=1&appid={api_key}\"\n    geocode_res = requests.get(geocode_url)\n    geocode_data = geocode_res.json()\n    if not geocode_data:\n        raise Exception(\"City not found.\")\n    lat = geocode_data[0]['lat']\n    lon = geocode_data[0]['lon']\n\n    # Fetch current weather\n    current_url = f\"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric\"\n    current_res = requests.get(current_url)\n    current_data = current_res.json()\n\n    # Fetch minute-level forecast for the next hour using One Call API\n    onecall_url = f\"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&appid={api_key}&units=metric&exclude=daily,hourly,alerts\"\n    onecall_res = requests.get(onecall_url)\n    onecall_data = onecall_res.json()\n\n    # Extract next hour's precipitation (returns array of 1-min forecasts for next 60 min)\n    minutely_forecast = onecall_data.get(\"minutely\", [])\n    return current_data, minutely_forecast\n\ndef rain_expected(minutely_forecast):\n    \"\"\"Returns True if rain is expected (precipitation > 0 mm) in the forecast for next hour.\"\"\"\n    for f in minutely_forecast:  # Each f has 'dt' and 'precipitation'\n        if f.get('precipitation', 0) > 0:\n            return True\n    return False\n\ndef log_weather(filepath, city, current_data, minutely_forecast):\n    \"\"\"Logs the weather data and forecast to a file.\"\"\"\n    log_entry = {\n        \"timestamp\": datetime.utcnow().isoformat() + 'Z',\n        \"city\": city,\n        \"current_weather\": current_data,\n        \"minutely_forecast\": minutely_forecast\n    }\n    with open(filepath, \"a\") as f:\n        f.write(json.dumps(log_entry) + \"\\n\")\n\ndef main():\n    parser = argparse.ArgumentParser(description=\"OpenWeatherMap Weather Logger\")\n    parser.add_argument(\"--api-key\", required=True, help=\"Your OpenWeatherMap API key\")\n    parser.add_argument(\"--city\", required=True, help=\"City name, e.g. 'London,GB'\")\n    parser.add_argument(\"--logfile\", default=\"weather_log.jsonl\", help=\"Path to log file\")\n    args = parser.parse_args()\n\n    print(f\"Monitoring weather for {args.city}. Logging to {args.logfile}. (Ctrl+C to stop)\\n\")\n    while True:\n        try:\n            current_data, minutely_forecast = fetch_weather(args.api_key, args.city)\n            log_weather(args.logfile, args.city, current_data, minutely_forecast)\n            if rain_expected(minutely_forecast):\n                print(f\"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Rain alert: Rain expected within the next hour in {args.city}!\")\n            else:\n                print(f\"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] No rain expected in the next hour.\")\n        except Exception as e:\n            print(f\"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Error fetching weather: {e}\")\n        print(\"Sleeping for 15 minutes...\\n\")\n        time.sleep(900)\n\nif __name__ == '__main__':\n    main()"
+  },
+  "cbea5333-9b39-437c-a216-b969eafe3df8": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "pending"
+      }
+    ],
+    "code": "import requests\nimport time\nimport sys\nfrom datetime import datetime, timedelta\n\ndef get_coordinates(city, api_key):\n    # Get latitude and longitude using Geocoding API\n    url = f'http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=1&appid={api_key}'\n    resp = requests.get(url)\n    resp.raise_for_status()\n    data = resp.json()\n    if not data:\n        print(f\"City '{city}' not found.\")\n        sys.exit(1)\n    lat = data[0]['lat']\n    lon = data[0]['lon']\n    return lat, lon\n\ndef fetch_weather(lat, lon, api_key):\n    # Use One Call API for current and next hour forecast\n    url = (\n        f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}'\n        f'&exclude=minutely,daily,alerts&units=metric&appid={api_key}'\n    )\n    resp = requests.get(url)\n    resp.raise_for_status()\n    return resp.json()\n\ndef format_weather_entry(current, next_hour, city):\n    dt_now = datetime.utcfromtimestamp(current['dt'])\n    next_hour_dt = datetime.utcfromtimestamp(next_hour['dt'])\n    entry = (\n        f\"Time: {dt_now} UTC | City: {city}\\n\"\n        f\"  Current Weather: {current['weather'][0]['main']} ({current['weather'][0]['description']})\\n\"\n        f\"  Temperature: {current['temp']}\u00b0C | Humidity: {current['humidity']}%\\n\"\n        f\"  Next Hour ({next_hour_dt} UTC) Forecast: {next_hour['weather'][0]['main']} ({next_hour['weather'][0]['description']})\\n\"\n        f\"  Forecasted Temp: {next_hour['temp']}\u00b0C | Forecasted Humidity: {next_hour['humidity']}%\\n\"\n        \"------------------------------------------------------\\n\"\n    )\n    return entry\n\ndef check_rain(next_hour):\n    conditions = [w['main'].lower() for w in next_hour['weather']]\n    return 'rain' in conditions\n\ndef main():\n    city = input(\"Enter city name: \").strip()\n    api_key = input(\"Enter your OpenWeatherMap API key: \").strip()\n    log_file = 'weather_log.txt'\n    \n    lat, lon = get_coordinates(city, api_key)\n    print(f\"Monitoring weather for {city} (lat: {lat}, lon: {lon}) every 15 minutes...\")\n    \n    while True:\n        try:\n            weather_data = fetch_weather(lat, lon, api_key)\n            current = weather_data['current']\n            next_hour = weather_data['hourly'][1]  # 0 = this hour, 1 = next hour (1 hour ahead)\n\n            log_entry = format_weather_entry(current, next_hour, city)\n            with open(log_file, 'a') as f:\n                f.write(log_entry)\n            \n            if check_rain(next_hour):\n                print(f\"ALERT ({datetime.now()}): Rain expected in the next hour in {city}!\")\n            else:\n                print(f\"{datetime.now()}: No rain expected in the next hour in {city}.\")\n\n        except Exception as e:\n            print(f\"Error fetching weather data: {e}\")\n\n        time.sleep(900)  # 15 minutes (900 seconds)\n\nif __name__ == '__main__':\n    main()"
+  },
+  "483c678b-6e28-46d3-9076-e1d6103510ed": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import requests\nimport time\nfrom datetime import datetime, timedelta\n\n# --- CONFIGURATION ---\nAPI_KEY = 'YOUR_OPENWEATHERMAP_API_KEY'  # Put your API key here\nCITY_NAME = 'London'\nLOG_FILE = 'weather_log.txt'\nSLEEP_INTERVAL_MIN = 15\n\n# --- FUNCTIONS ---\n\ndef get_city_coordinates(city_name, api_key):\n    \"\"\"Fetch latitude and longitude for a city using OpenWeatherMap Geocoding API.\"\"\"\n    geocode_url = (\n        f'http://api.openweathermap.org/geo/1.0/direct'\n        f'?q={city_name}&limit=1&appid={api_key}'\n    )\n    response = requests.get(geocode_url)\n    response.raise_for_status()\n    data = response.json()\n    if not data:\n        raise ValueError(f\"City '{city_name}' not found.\")\n    lat = data[0]['lat']\n    lon = data[0]['lon']\n    return lat, lon\n\ndef get_weather(lat, lon, api_key):\n    \"\"\"Fetch current weather and hourly forecast (for next hour) from One Call API.\"\"\"\n    url = (\n        f'https://api.openweathermap.org/data/2.5/onecall'\n        f'?lat={lat}&lon={lon}&exclude=minutely,daily,alerts'\n        f'&appid={api_key}&units=metric'\n    )\n    response = requests.get(url)\n    response.raise_for_status()\n    data = response.json()\n    return data\n\ndef log_weather(log_file, log_entry):\n    \"\"\"Append weather log entry to file.\"\"\"\n    with open(log_file, 'a') as f:\n        f.write(log_entry + '\\n')\n\ndef format_weather_entry(current, forecast):\n    \"\"\"Return a nicely formatted log string for the weather data.\"\"\"\n    now_dt = datetime.utcfromtimestamp(current['dt'])\n    fc_dt = datetime.utcfromtimestamp(forecast['dt'])\n\n    curr_desc = current['weather'][0]['description'].capitalize()\n    fc_desc = forecast['weather'][0]['description'].capitalize()\n\n    curr_precip = current.get(\"rain\", {}).get(\"1h\", 0)\n    fc_precip_prob = forecast.get(\"pop\", 0) * 100  # Probability of precipitation [0,1]\n\n    curr_line = (\n        f\"[{now_dt.strftime('%Y-%m-%d %H:%M UTC')}] Current: \"\n        f\"{current['temp']}\u00b0C, {curr_desc}, Humidity: {current['humidity']}%, Precip (last 1h): {curr_precip}mm\"\n    )\n    fc_line = (\n        f\"[{fc_dt.strftime('%Y-%m-%d %H:%M UTC')}] Next Hour Forecast: \"\n        f\"{forecast['temp']}\u00b0C, {fc_desc}, Humidity: {forecast['humidity']}%, \"\n        f\"Precip Probability: {fc_precip_prob:.0f}%, \"\n        f\"Expected Rain (1h): {forecast.get('rain', {}).get('1h', 0)}mm\"\n    )\n    return curr_line + '\\n' + fc_line\n\ndef main():\n    lat, lon = get_city_coordinates(CITY_NAME, API_KEY)\n    print(f\"Monitoring weather for {CITY_NAME} ({lat}, {lon})...\")\n\n    while True:\n        try:\n            data = get_weather(lat, lon, API_KEY)\n\n            # Current weather\n            current = data['current']\n\n            # Find forecast entry for the next complete hour\n            now = datetime.utcfromtimestamp(current['dt'])\n            forecasts = data['hourly']\n\n            # Find the forecast for the next hour\n            next_hour = now + timedelta(hours=1)\n            forecast = min(\n                forecasts,\n                key=lambda fc: abs(datetime.utcfromtimestamp(fc['dt']) - next_hour)\n            )\n\n            # Construct log entry\n            log_entry = format_weather_entry(current, forecast)\n            log_weather(LOG_FILE, log_entry)\n            print(f\"[{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}] Weather data logged.\")\n\n            # Alert if rain is expected in the next hour\n            rain_prob = forecast.get('pop', 0)\n            expected_rain = forecast.get('rain', {}).get('1h', 0)\n            if rain_prob > 0.2 or expected_rain > 0:  # Alert if significant rain chance/amount\n                alert_msg = (\n                    f\"ALERT: Rain expected in the next hour! \"\n                    f\"Probability: {rain_prob*100:.0f}%, \"\n                    f\"Expected: {expected_rain}mm\"\n                )\n                print(alert_msg)\n\n        except Exception as e:\n            print(f\"Error: {e}\")\n\n        time.sleep(SLEEP_INTERVAL_MIN * 60)\n\n\nif __name__ == '__main__':\n    main()"
+  },
+  "c46f5f9a-8068-4ed6-9bf6-9594a117f006": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import os\nimport requests\nimport time\nimport logging\nfrom datetime import datetime, timedelta\nimport sys\n\n# Configuration: Accept from env vars or provide here\nCITY_NAME = os.getenv('OWM_CITY', 'London')\nAPI_KEY = os.getenv('OWM_API_KEY', 'your_api_key_here')\n\n# Logging configuration\nLOG_FILENAME = \"weather_log.txt\"\nlogging.basicConfig(filename=LOG_FILENAME,\n                    level=logging.INFO,\n                    format='%(asctime)s %(message)s')\n\n# OpenWeatherMap endpoints\nGEOCODING_URL = 'http://api.openweathermap.org/geo/1.0/direct'\nONECALL_URL = 'https://api.openweathermap.org/data/2.5/onecall'\n\ndef get_city_coords(city, api_key):\n    params = {'q': city, 'limit': 1, 'appid': api_key}\n    resp = requests.get(GEOCODING_URL, params=params)\n    resp.raise_for_status()\n    data = resp.json()\n    if not data:\n        raise ValueError(f\"City '{city}' not found.\")\n    return data[0]['lat'], data[0]['lon']\n\ndef get_weather(lat, lon, api_key):\n    params = {\n        'lat': lat,\n        'lon': lon,\n        'exclude': 'minutely,daily,alerts',\n        'units': 'metric',\n        'appid': api_key\n    }\n    resp = requests.get(ONECALL_URL, params=params)\n    resp.raise_for_status()\n    return resp.json()\n\ndef parse_current_weather(current):\n    desc = current['weather'][0]['description']\n    temp = current['temp']\n    humidity = current['humidity']\n    wind_speed = current['wind_speed']\n    rain = current.get('rain', {}).get('1h', 0)\n    return f\"Current: {desc}, Temp: {temp}\u00b0C, Humidity: {humidity}%, Wind: {wind_speed}m/s, Rain: {rain}mm\"\n\ndef parse_hourly_forecast(hourly, next_hour_ts):\n    # Find the forecasted hour just after now\n    for hour in hourly:\n        if hour['dt'] >= next_hour_ts:\n            desc = hour['weather'][0]['description']\n            temp = hour['temp']\n            humidity = hour['humidity']\n            wind_speed = hour['wind_speed']\n            rain = hour.get('rain', {}).get('1h', 0)\n            return f\"Forecast (next hour): {desc}, Temp: {temp}\u00b0C, Humidity: {humidity}%, Wind: {wind_speed}m/s, Rain: {rain}mm\", rain\n    return \"No hourly forecast available!\", 0\n\ndef main():\n    global CITY_NAME, API_KEY\n    if API_KEY == 'your_api_key_here':\n        print(\"Please set your OpenWeatherMap API key via the 'OWM_API_KEY' environment variable.\")\n        sys.exit(1)\n\n    try:\n        lat, lon = get_city_coords(CITY_NAME, API_KEY)\n    except Exception as e:\n        print(f\"Error finding city: {e}\")\n        sys.exit(1)\n\n    print(f\"Monitoring weather for {CITY_NAME} ({lat}, {lon})...\")\n\n    while True:\n        try:\n            weather_data = get_weather(lat, lon, API_KEY)\n            now_ts = int(time.time())\n            current = weather_data['current']\n            hourly = weather_data['hourly']\n\n            # Find next hour's forecast timestamp (rounded to next hour)\n            next_hour_dt = datetime.utcfromtimestamp(now_ts) + timedelta(hours=1)\n            next_hour_dt = next_hour_dt.replace(minute=0, second=0, microsecond=0)\n            next_hour_ts = int(next_hour_dt.timestamp())\n\n            log_entry = f\"==== {datetime.now()} ====\\n\"\n\n            # Current weather\n            current_str = parse_current_weather(current)\n            log_entry += current_str + \"\\n\"\n\n            # Next hour's forecast\n            forecast_str, rain_next_hour = parse_hourly_forecast(hourly, next_hour_ts)\n            log_entry += forecast_str + \"\\n\"\n\n            logging.info(\"\\n\" + log_entry.strip())\n\n            if rain_next_hour > 0:\n                print(f\"ALERT: Rain ({rain_next_hour}mm expected) forecasted in the next hour at {CITY_NAME}!\")\n\n        except Exception as e:\n            logging.error(f\"Error during weather fetch/log: {e}\")\n            print(f\"Error: {e}\")\n\n        # Sleep for 15 minutes\n        time.sleep(15 * 60)\n\n\nif __name__ == \"__main__\":\n    main()"
+  },
+  "f596e3aa-5987-4214-884d-e71277e1f82e": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import time\nimport logging\nimport python_weather\nimport asyncio\nimport schedule\n\n# Set up logging\nlogging.basicConfig(\n    filename='weather_log.txt',\n    level=logging.INFO,\n    format='%(asctime)s %(message)s',\n)\n\nCITY_NAME = 'London'  # Change to your desired city\n\ndef check_for_rain(description):\n    rain_keywords = ['rain', 'shower', 'drizzle', 'thunderstorm']\n    return any(keyword in description.lower() for keyword in rain_keywords)\n\nasync def fetch_weather(city):\n    async with python_weather.Client() as client:\n        weather = await client.get(city)\n        current = weather.current\n        # Get the next available forecast (usually in 1-hour increments)\n        next_hour_forecast = None\n        for forecast in weather.forecasts:\n            next_hour_forecast = forecast\n            break\n        return current, next_hour_forecast\n\ndef weather_job():\n    def run_async():\n        weather_info = asyncio.run(fetch_weather(CITY_NAME))\n        if weather_info:\n            current, next_hour_forecast = weather_info\n            log_entry = (f\"Current Weather: {current.temperature}\u00b0{current.unit}, \"\n                         f\"Desc: {current.description}; \"\n                         f\"Next hour forecast: {next_hour_forecast.sky_text}, \"\n                         f\"{next_hour_forecast.temperature}\u00b0{current.unit}\")\n            logging.info(log_entry)\n\n            print(\"-- Weather Update --\")\n            print(log_entry)\n\n            # Check for rain in the next hour\n            if check_for_rain(next_hour_forecast.sky_text):\n                print(f\"ALERT: Rain expected within the next hour in {CITY_NAME}!\")\n\n    run_async()\n\n# Schedule the weather job every 15 minutes\nschedule.every(15).minutes.do(weather_job)\n\nif __name__ == \"__main__\":\n    # Run once immediately\n    weather_job()\n    # Start the scheduler loop\n    while True:\n        schedule.run_pending()\n        time.sleep(1)"
+  },
+  "1663fe3d-cba9-48d5-93f6-ba925fa15396": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import requests\nimport time\nimport datetime\nimport sys\nimport urllib.parse\n\nLOG_FILE = 'weather_log.txt'\nINTERVAL = 15 * 60  # 15 minutes in seconds\n\ndef get_weather(city):\n    \"\"\"Fetch weather data from wttr.in as JSON.\"\"\"\n    url = f\"https://wttr.in/{urllib.parse.quote(city)}?format=j1\"\n    response = requests.get(url)\n    response.raise_for_status()\n    return response.json()\n\ndef parse_current_weather(data):\n    cc = data['current_condition'][0]\n    desc = cc['weatherDesc'][0]['value']\n    temp_c = cc['temp_C']\n    humidity = cc['humidity']\n    wind_kph = cc['windspeedKmph']\n    return f\"{desc}, {temp_c}\u00b0C, Humidity: {humidity}%, Wind: {wind_kph} km/h\"\n\ndef parse_next_hour_forecast(data):\n    now = datetime.datetime.utcnow()\n    today = data['weather'][0]\n    hourly = today['hourly']\n\n    # Find the nearest \"hourly\" entry in the next hour\n    min_diff = 9999\n    next_hour_data = None\n    for hour in hourly:\n        time_str = hour['time']\n        # pad to 4 digits: '0' -> '0000', '600'->'0600'\n        time_str = time_str.zfill(4)\n        forecast_time = datetime.datetime.combine(\n            now.date(),\n            datetime.time(int(time_str[:2]), int(time_str[2:]))\n        )\n        diff = (forecast_time - now).total_seconds()\n        if 0 <= diff < min_diff:\n            min_diff = diff\n            next_hour_data = hour\n\n    if not next_hour_data:\n        next_hour_data = hourly[-1]  # fallback to last available\n\n    desc = next_hour_data['weatherDesc'][0]['value']\n    chanceofrain = next_hour_data.get('chanceofrain', '0')\n    temp_c = next_hour_data['tempC']\n    return desc, temp_c, chanceofrain\n\ndef rain_expected(desc, chanceofrain):\n    return \"rain\" in desc.lower() or (chanceofrain.isdigit() and int(chanceofrain) >= 30)\n\ndef log_weather(city, current_str, forecast_str):\n    now = datetime.datetime.now().isoformat(sep=' ', timespec='seconds')\n    with open(LOG_FILE, 'a') as f:\n        f.write(f\"[{now}] {city}: NOW: {current_str} | NEXT HOUR: {forecast_str}\\n\")\n\ndef main():\n    if len(sys.argv) < 2:\n        print(\"Usage: python weather_agent.py <city name>\")\n        sys.exit(1)\n\n    city = \" \".join(sys.argv[1:])\n\n    print(f\"Starting weather agent for '{city}'. Logs every {INTERVAL//60} minutes. Ctrl+C to stop.\")\n    while True:\n        try:\n            data = get_weather(city)\n            current_str = parse_current_weather(data)\n            desc, temp_c, chanceofrain = parse_next_hour_forecast(data)\n            forecast_str = f\"{desc}, {temp_c}\u00b0C, Chance of rain: {chanceofrain}%\"\n            log_weather(city, current_str, forecast_str)\n\n            if rain_expected(desc, chanceofrain):\n                print(f\"ALERT: Rain expected within the next hour in {city} ({desc}, {chanceofrain}%)\")\n\n            print(f\"[{datetime.datetime.now().strftime('%H:%M:%S')}] Logged weather for {city}.\")\n\n        except Exception as e:\n            print(f\"Error: {e}\")\n\n        time.sleep(INTERVAL)\n\nif __name__ == \"__main__\":\n    main()"
+  },
+  "d9c8f24f-4d67-4024-808d-996a5bf6dc6d": {
+    "steps": [
+      {
+        "step": "mkdir",
+        "status": "done"
+      },
+      {
+        "step": "write_file",
+        "status": "done"
+      },
+      {
+        "step": "run_script",
+        "status": "done"
+      }
+    ],
+    "code": "import time\nimport requests\nimport argparse\nfrom datetime import datetime\n\nLOG_FILE = \"weather_log.txt\"\nWTTR_URL = \"https://wttr.in/{}?format=j1\"\nCHECK_INTERVAL = 15 * 60  # 15 minutes in seconds\n\ndef fetch_weather(city):\n    try:\n        url = WTTR_URL.format(city)\n        response = requests.get(url, timeout=10)\n        response.raise_for_status()\n        data = response.json()\n\n        # Current weather\n        current = data['current_condition'][0]\n        current_temp = current['temp_C']\n        current_desc = current['weatherDesc'][0]['value']\n\n        # Next hour forecast\n        hourly = data['weather'][0]['hourly']\n        current_hour = datetime.now().hour\n        # 'hourly' array has 8 items, for hours: 0,3,6...,21\n        # Find the entry that's closest to the *next* hour\n        next_index = min(range(8), key=lambda i: abs(current_hour + 1 - int(hourly[i]['time']) // 100))\n        next_hour = hourly[next_index]\n        next_hour_time = next_hour['time'].zfill(4)\n        next_hour_time = f\"{int(next_hour_time[:2])}:00\"\n        next_hour_desc = next_hour['weatherDesc'][0]['value']\n\n        # Rain check\n        rain_mm = float(next_hour.get('precipMM', '0'))\n\n        return {\n            'city': city,\n            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),\n            'current_temp': current_temp,\n            'current_desc': current_desc,\n            'next_hour_time': next_hour_time,\n            'next_hour_desc': next_hour_desc,\n            'rain_mm': rain_mm\n        }\n    except Exception as e:\n        print(f\"[{datetime.now()}] Error fetching weather: {e}\")\n        return None\n\ndef log_weather(data):\n    with open(LOG_FILE, \"a\") as f:\n        line = (\n            f\"{data['timestamp']} | City: {data['city']} | \"\n            f\"Current: {data['current_temp']}\u00b0C, {data['current_desc']} | \"\n            f\"Next hour ({data['next_hour_time']}): {data['next_hour_desc']} | \"\n            f\"Expected rain: {data['rain_mm']}mm\\n\"\n        )\n        f.write(line)\n\ndef check_rain_alert(data):\n    if data['rain_mm'] > 0:\n        print(f\"ALERT: Rain expected in the next hour ({data['next_hour_time']}) in {data['city']}! \"\n              f\"Forecast: {data['next_hour_desc']}, {data['rain_mm']}mm precipitation.\")\n\ndef main():\n    parser = argparse.ArgumentParser(description=\"Fetch and log weather info for a specified city using wttr.in (no API key required).\")\n    parser.add_argument(\"city\", help=\"City name (e.g., London, New York)\")\n    args = parser.parse_args()\n\n    print(f\"Starting weather logger for {args.city}. Logging every {CHECK_INTERVAL // 60} minutes to {LOG_FILE}.\")\n\n    while True:\n        weather_data = fetch_weather(args.city)\n        if weather_data:\n            log_weather(weather_data)\n            check_rain_alert(weather_data)\n        else:\n            print(\"Failed to log weather this cycle.\")\n        time.sleep(CHECK_INTERVAL)\n\nif __name__ == \"__main__\":\n    main()"
+  }
+}
